@@ -1,31 +1,35 @@
 <?php
+session_start();
 
-require 'db.php';
+if (isset($_POST['submit'])) {
+    // Kết nối với cơ sở dữ liệu và kiểm tra thông tin đăng nhập
+    require 'db.php';
 
-class RequestManager
-{
-    private $connection;
+    $username = $_POST['username'];
+    $password = $_POST['password'];
 
-    public function __construct($connection)
-    {
-        $this->connection = $connection;
-    }
+    // Thực hiện truy vấn SQL để kiểm tra thông tin đăng nhập
+    $sql = 'SELECT * FROM users WHERE username = :username AND password = :password';
+    $statement = $connection->prepare($sql);
+    $statement->bindParam(':username', $username);
+    $statement->bindParam(':password', $password);
+    $statement->execute();
 
-    public function getRequest($id)
-    {
-        $sql = 'SELECT * FROM `support-request` WHERE id=:id';
-        $statement = $this->connection->prepare($sql);
-        $statement->execute([':id' => $id]);
-        return $statement->fetch(PDO::FETCH_OBJ);
+    // Lấy kết quả
+    $user = $statement->fetch(PDO::FETCH_ASSOC);
+
+    if ($user) {
+        // Đăng nhập thành công
+        $_SESSION['username'] = $username;
+        header('Location: admin.php');
+        exit();
+    } else {
+        // Đăng nhập không thành công
+        echo '<script>alert("Đăng nhập không thành công. Vui lòng kiểm tra tên đăng nhập và mật khẩu.");</script>';
     }
 }
-
-$id = $_GET['id'];
-
-$requestManager = new RequestManager($connection);
-$request = $requestManager->getRequest($id);
-
 ?>
+
 <!DOCTYPE html>
 <html lang="en" title="Coding design">
 
@@ -38,68 +42,33 @@ $request = $requestManager->getRequest($id);
 <div class="formbold-main-wrapper">
     <div class="formbold-form-wrapper">
         <div class="formbold-event-wrapper">
-            <h3>Xem thông tin chi tiết</h3>
+            <h3>Đăng nhập</h3>
             <rect width="490" height="215" rx="5" fill="url(#pattern0)" />
             <defs>
         </div>
 
-        <form action="" method="POST" enctype="multipart/form-data">
+        <form action="" method="POST">
 
-            <div class="formbold-input-flex">
-                <div>
-                    <label for="name_project" class="formbold-form-label">
-                        Tên dự án <span style="color:red">*</span>
-                    </label>
-                    <input type="text" name="nameProject" id="nameProject" class="formbold-form-input" placeholder="<?= $request->nameProject; ?>" readonly />
-                </div>
-                <div>
-                    <label for="date" class="formbold-form-label"> Thời gian hoàn thành <span style="color:red">*</span>
-                    </label>
-                    <input type="text" name="completionTime" id="completionTime" class="formbold-form-input" placeholder="<?= $request->completionTime; ?>" readonly />
-                </div>
-            </div>
 
-            <div class="formbold-input-flex">
-                <div>
-                    <label for="fee" class="formbold-form-label"> Phí đề xuất <span style="color:red">*</span></label>
-                    <input type="number" name="fee" id="fee" class="formbold-form-input" placeholder="<?= $request->fee; ?>" readonly />
-                </div>
-                <div>
-                    <label for="contact" class="formbold-form-label"> Thông tin liên lạc <span style="color:red">*</span></label>
-                    <input type="text" name="contact" id="contact" class="formbold-form-input" placeholder="<?= $request->contact; ?>" readonly />
-                </div>
-            </div>
-
-            <div class="formbold-input-flex">
-                <div>
-                    <label for="schedule" class="formbold-form-label"> Đặt lịch làm việc <span style="color:red">*</span></label>
-                    <input type="text" name="schedule" id="schedule" class="formbold-form-input" placeholder="<?= $request->schedule; ?>" readonly />
-                </div>
-                <div>
-                    <label for="requirements" class="formbold-form-label">Thời gian yêu cầu </label>
-                    <input type="text" name="studyRequest" id="studyRequest" placeholder="<?= $request->timestamp; ?>" class="formbold-form-input" readonly />
-                </div>
+            <div>
+                <label for="files" class="formbold-form-label">Tên tài khoản:
+                </label>
+                <input type="text" name="username" class="formbold-form-input" placeholder="" />
             </div>
             <div>
-                <label for="files" class="formbold-form-label">File
+                <label for="files" class="formbold-form-label">Mật khẩu:
                 </label>
-                <input type="text" name="filePath" id="filePath" class="formbold-form-input" placeholder="<?= $request->filePath; ?>" readonly />
-            </div>
-            <div>
-                <label for="files" class="formbold-form-label">Người xử lý
-                </label>
-                <input type="text" name="filePath" id="filePath" class="formbold-form-input" placeholder="<?= $request->handleActor; ?>" readonly />
+                <input type="password" name="password" class="formbold-form-input" placeholder="" />
             </div>
 
 
+            <button class="formbold-btn" type="submit" name="submit">
+                Login
+            </button>
 
-
-            <br>
 
         </form>
-        <a href="admin.php" style="text-decoration: none;color:#fff"> <button class="formbold-btn">Trở
-                về</button>
-        </a>
+
 
     </div>
 </div>
@@ -314,27 +283,3 @@ $request = $requestManager->getRequest($id);
         background: #0d45a5;
     }
 </style>
-
-<script>
-    function updateRealTimeClock() {
-        var now = new Date();
-        var hours = now.getHours();
-        var minutes = now.getMinutes();
-        var seconds = now.getSeconds();
-        var day = now.getDate();
-        var month = now.getMonth() + 1;
-        var year = now.getFullYear();
-
-        var timeString = addZero(hours) + ":" + addZero(minutes) + ":" + addZero(seconds);
-        var dateString = addZero(day) + "/" + addZero(month) + "/" + year;
-
-        document.getElementById("real-time-clock").innerHTML = "" + dateString + "<br>" + timeString;
-
-        setTimeout(updateRealTimeClock, 1000);
-    }
-
-    function addZero(number) {
-        return (number < 10) ? "0" + number : number;
-    }
-    updateRealTimeClock();
-</script>

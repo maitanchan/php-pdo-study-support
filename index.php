@@ -11,7 +11,7 @@ class RequestManager
         $this->connection = $connection;
     }
 
-    public function addSupportRequest($nameProject, $completionTime, $fee, $contact, $schedule, $studyRequest, $filePath)
+    public function addSupportRequest($nameProject, $completionTime, $fee, $contact, $schedule, $studyRequest, $files)
     {
         try {
             if (empty($nameProject) || empty($completionTime) || empty($fee) || empty($contact) || empty($schedule)) {
@@ -19,27 +19,49 @@ class RequestManager
             }
 
             $uploadDirectory = 'uploads/';
-            $uploadedFile = $uploadDirectory . basename($_FILES['filePath']['name']);
 
-            if (move_uploaded_file($_FILES['filePath']['tmp_name'], $uploadedFile)) {
-                $sql = 'INSERT INTO `support-request` (nameProject, completionTime, fee, contact, schedule, studyRequest, filePath) VALUES(:nameProject, :completionTime, :fee, :contact, :schedule, :studyRequest, :filePath)';
+            // Mảng để lưu trữ đường dẫn của tất cả các tệp tin
+            $filePaths = [];
 
-                $statement = $this->connection->prepare($sql);
+            // Lặp qua mảng các tệp tin
+            foreach ($files['name'] as $key => $fileName) {
+                // Tạo đường dẫn cho mỗi tệp tin
+                $uploadedFile = $uploadDirectory . basename($fileName);
 
-                $statement->bindParam(':nameProject', $nameProject);
-                $statement->bindParam(':completionTime', $completionTime);
-                $statement->bindParam(':fee', $fee);
-                $statement->bindParam(':contact', $contact);
-                $statement->bindParam(':schedule', $schedule);
-                $statement->bindParam(':studyRequest', $studyRequest);
-                $statement->bindParam(':filePath', $uploadedFile);
+                // Kiểm tra định dạng của tệp tin
+                $allowedFormats = ['pdf', 'xls', 'xlsx', 'doc', 'docx'];
+                $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
 
-                $statement->execute();
-                $_SESSION['success_message'] = "Gửi yêu cầu thành công";
-                return true;
-            } else {
-                throw new Exception("Có lỗi xảy ra khi tải lên file.");
+                if (!in_array($fileExtension, $allowedFormats)) {
+                    throw new Exception("Định dạng tệp không được hỗ trợ.");
+                }
+
+                // Kiểm tra và xử lý việc tải lên
+                if (move_uploaded_file($files['tmp_name'][$key], $uploadedFile)) {
+                    // Thêm đường dẫn vào mảng
+                    $filePaths[] = $uploadedFile;
+                } else {
+                    throw new Exception("Có lỗi xảy ra khi tải lên file.");
+                }
             }
+
+            $sql = 'INSERT INTO `support-request` (nameProject, completionTime, fee, contact, schedule, studyRequest, filePath) VALUES(:nameProject, :completionTime, :fee, :contact, :schedule, :studyRequest, :filePath)';
+            $statement = $this->connection->prepare($sql);
+
+            // Tạo một chuỗi đường dẫn từ mảng
+            $filePathsString = implode(', ', $filePaths);
+
+            $statement->bindParam(':nameProject', $nameProject);
+            $statement->bindParam(':completionTime', $completionTime);
+            $statement->bindParam(':fee', $fee);
+            $statement->bindParam(':contact', $contact);
+            $statement->bindParam(':schedule', $schedule);
+            $statement->bindParam(':studyRequest', $studyRequest);
+            $statement->bindParam(':filePath', $filePathsString);
+            $statement->execute();
+
+            $_SESSION['success_message'] = "Gửi yêu cầu thành công";
+            return true;
         } catch (PDOException $e) {
             echo 'Error: ' . $e->getMessage();
             return false;
@@ -65,6 +87,7 @@ if (isset($_POST['submit'])) {
     }
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="en" title="Coding design">
 
@@ -76,7 +99,8 @@ if (isset($_POST['submit'])) {
 </head>
 
 <div class="formbold-main-wrapper">
-    <div class="formbold-form-wrapper">
+    <div class="formbold-form-wrapper" style="max-width: 750px;">
+
         <div class="formbold-event-wrapper">
             <span>SupHere</span>
             <h3>Thông Tin Hỗ Trợ</h3>
@@ -103,7 +127,7 @@ if (isset($_POST['submit'])) {
 
             <div class="formbold-input-flex">
                 <div>
-                    <label for="fee" class="formbold-form-label"> Phí đề xuất <span style="color:red">*</span></label>
+                    <label for="fee" class="formbold-form-label"> Phí đề xuất (VNĐ) <span style="color:red">*</span></label>
                     <input type="number" name="fee" id="fee" required class="formbold-form-input" placeholder="VD: 50.000, 100.000,..." />
                 </div>
                 <div>
@@ -126,32 +150,49 @@ if (isset($_POST['submit'])) {
             <div>
                 <label for="files" class="formbold-form-label">File đính kèm (PDF, Excel, Excel Spreadsheet, Word)
                 </label>
-                <input type="file" name="filePath" id="filePath" class="formbold-form-input" />
+                <input type="file" type="file" name="filePath[]" multiple id="filePath" class="formbold-form-input" />
             </div>
 
 
 
             <button type="submit" name="submit" class="formbold-btn">Submit </button>
             <br>
-
+            <p style="margin-top:10px; margin-left:100px">
+                --- ❤️ Chúng tôi sẽ liên hệ để biết thêm chi tiết sau 1 giờ ❤️ ---
+            </p>
         </form>
-        <p style="margin-top:10px; margin-left:10px">
-            --- ❤️ Chúng tôi sẽ liên hệ để biết thêm chi tiết sau 1 giờ ❤️ ---
-        </p>
-        <h3 style="margin-top:20px">Quy tắc làm việc</h3>
 
-        <p class="formbold-policy">
-            1. Không nhận cọc
-        </p>
-        <p class="formbold-policy">
-            2. Đảm bảo chất lượng, yêu cầu
-        </p>
-        <p class="formbold-policy">
-            3. Quy trình: Liên hệ xác nhận và trao đổi - Hoàn thành - Check (hình ảnh) - Thanh toán - Chuyển bài
-        </p>
-        <p class="formbold-policy">
-            4. Chính sách bảo hành thêm/ sửa miễn phí sau khi nhận bài
-        </p>
+
+
+
+    </div>
+    <div style="position: relative;bottom:103px">
+
+        <div class="formbold-form-wrapper">
+
+            <div>
+
+                <h3>Quy tắc làm việc</h3>
+
+                <p class="formbold-policy">
+                    1. Không nhận cọc
+                </p>
+                <p class="formbold-policy">
+                    2. Đảm bảo chất lượng, yêu cầu
+                </p>
+                <p class="formbold-policy">
+                    3. Quy trình: Liên hệ xác nhận và trao đổi - Hoàn thành - Check (hình ảnh) - Thanh toán - Chuyển bài
+                </p>
+                <p class="formbold-policy">
+                    4. Chính sách bảo hành thêm/ sửa miễn phí sau khi nhận bài
+                </p>
+            </div>
+
+
+        </div>
+
+
+
         <div class="formbold-event-details">
             <h5>Thông tin khiếu nại</h5>
 
@@ -175,6 +216,9 @@ if (isset($_POST['submit'])) {
 </div>
 
 
+</div>
+
+
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
@@ -186,6 +230,7 @@ if (isset($_POST['submit'])) {
 
     body {
         font-family: 'Inter', sans-serif;
+
     }
 
     .formbold-main-wrapper {
@@ -276,7 +321,7 @@ if (isset($_POST['submit'])) {
     }
 
     .formbold-form-title {
-        color: #07074d;
+        color: #000;
         font-weight: 600;
         font-size: 28px;
         line-height: 35px;
@@ -307,7 +352,7 @@ if (isset($_POST['submit'])) {
         width: 100%;
         padding: 13px 22px;
         border-radius: 5px;
-        border: 1px solid #dde3ec;
+        border: 2px solid #a6a4a4;
         background: #ffffff;
         font-weight: 500;
         font-size: 16px;
@@ -322,7 +367,7 @@ if (isset($_POST['submit'])) {
     }
 
     .formbold-form-label {
-        color: #536387;
+        color: #a6a4a4;
         font-size: 14px;
         line-height: 24px;
         display: block;
