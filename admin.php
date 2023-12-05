@@ -6,7 +6,7 @@ require 'db.php';
 
 class RequestManager
 {
-    public $connection;
+    private $connection;
 
     public function __construct($connection)
     {
@@ -148,7 +148,7 @@ if (isset($_GET['logout'])) {
                                 $filePaths = explode(', ', $request->filePath);
                                 foreach ($filePaths as $filePath) {
                                     $fileName = basename($filePath);
-                                    echo '<a href="download_file.php?file=' . urlencode($filePath) . '" download>' . $fileName . '</a><br>';
+                                    echo '<a href="download_file.php?file=' . urlencode($filePath) . '" download>' . substr($fileName, 0, 20) . '</a><br>';
                                 }
                                 ?>
                             </td>

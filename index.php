@@ -25,8 +25,11 @@ class RequestManager
 
             // Lặp qua mảng các tệp tin
             foreach ($files['name'] as $key => $fileName) {
+                // Tạo một tên file duy nhất bằng cách thêm timestamp vào tên file
+                $uniqueFileName = uniqid() . '_' . $fileName;
+
                 // Tạo đường dẫn cho mỗi tệp tin
-                $uploadedFile = $uploadDirectory . basename($fileName);
+                $uploadedFile = $uploadDirectory . basename($uniqueFileName);
 
                 // Kiểm tra định dạng của tệp tin
                 $allowedFormats = ['pdf', 'xls', 'xlsx', 'doc', 'docx'];
@@ -87,6 +90,7 @@ if (isset($_POST['submit'])) {
     }
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en" title="Coding design">
