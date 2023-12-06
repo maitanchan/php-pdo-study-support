@@ -238,10 +238,29 @@ body {
     align-items: center;
 }
 
+body::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: -1;
+}
+
+body {
+    background-image: url('bg-img.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: 0;
+}
+
 main.table {
     width: 92vw;
     height: 90vh;
-    background-color: #fff5;
+    background-color: #ffff;
     backdrop-filter: blur(7px);
     box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 2px 6px 2px;
     border-radius: 10px;
