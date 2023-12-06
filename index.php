@@ -14,37 +14,29 @@ class RequestManager
     public function addSupportRequest($nameProject, $completionTime, $fee, $contact, $schedule, $studyRequest, $files)
     {
         try {
-            if (empty($nameProject) || empty($completionTime) || empty($fee) || empty($contact) || empty($schedule)) {
-                throw new Exception("Vui lòng điền đầy đủ thông tin.");
-            }
-
             $uploadDirectory = 'uploads/';
 
-            // Mảng để lưu trữ đường dẫn của tất cả các tệp tin
             $filePaths = [];
 
-            // Lặp qua mảng các tệp tin
-            foreach ($files['name'] as $key => $fileName) {
-                // Tạo một tên file duy nhất bằng cách thêm timestamp vào tên file
-                $uniqueFileName = uniqid() . '_' . $fileName;
+            // Kiểm tra xem có tệp được tải lên không
+            if (!empty($files['name'][0])) {
+                foreach ($files['name'] as $key => $fileName) {
+                    $uniqueFileName = uniqid() . '_' . $fileName;
 
-                // Tạo đường dẫn cho mỗi tệp tin
-                $uploadedFile = $uploadDirectory . basename($uniqueFileName);
+                    $uploadedFile = $uploadDirectory . basename($uniqueFileName);
 
-                // Kiểm tra định dạng của tệp tin
-                $allowedFormats = ['pdf', 'xls', 'xlsx', 'doc', 'docx'];
-                $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+                    $allowedFormats = ['pdf', 'xls', 'xlsx', 'doc', 'docx'];
+                    $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
 
-                if (!in_array($fileExtension, $allowedFormats)) {
-                    throw new Exception("Định dạng tệp không được hỗ trợ.");
-                }
+                    if (!in_array($fileExtension, $allowedFormats)) {
+                        throw new Exception("Định dạng tệp không được hỗ trợ.");
+                    }
 
-                // Kiểm tra và xử lý việc tải lên
-                if (move_uploaded_file($files['tmp_name'][$key], $uploadedFile)) {
-                    // Thêm đường dẫn vào mảng
-                    $filePaths[] = $uploadedFile;
-                } else {
-                    throw new Exception("Có lỗi xảy ra khi tải lên file.");
+                    if (move_uploaded_file($files['tmp_name'][$key], $uploadedFile)) {
+                        $filePaths[] = $uploadedFile;
+                    } else {
+                        throw new Exception("Có lỗi xảy ra khi tải lên file.");
+                    }
                 }
             }
 
@@ -52,7 +44,7 @@ class RequestManager
             $statement = $this->connection->prepare($sql);
 
             // Tạo một chuỗi đường dẫn từ mảng
-            $filePathsString = implode(', ', $filePaths);
+            $filePathsString = !empty($filePaths) ? implode(', ', $filePaths) : '';
 
             $statement->bindParam(':nameProject', $nameProject);
             $statement->bindParam(':completionTime', $completionTime);
@@ -108,32 +100,34 @@ if (isset($_POST['submit'])) {
 
         <div class="formbold-event-wrapper">
             <span>SupHere</span>
-            <h3>Thông Tin Hỗ Trợ</h3>
-            <rect width="490" height="215" rx="5" fill="url(#pattern0)" />
-            <defs>
+
+            <div style="display: flex; justify-content:space-between">
+                <h3>Thông Tin Hỗ Trợ</h3>
+                <div id="real-time-clock">
+                </div>
+            </div>
         </div>
 
         <form action="" method="POST" enctype="multipart/form-data">
-            <div id="real-time-clock">
-            </div>
+
             <div class="formbold-input-flex">
                 <div>
                     <label for="name_project" class="formbold-form-label">
-                        Tên dự án <span style="color:red">*</span>
+                        Tên dự án <span style="color:red"></span>
                     </label>
-                    <input type="text" name="nameProject" id="nameProject" required class="formbold-form-input" placeholder="VD: SQL, Python, Toán,..." />
+                    <input type="text" name="nameProject" id="nameProject" class="formbold-form-input" placeholder="VD: SQL, Python, Toán,..." />
                 </div>
                 <div>
-                    <label for="date" class="formbold-form-label"> Thời gian hoàn thành <span style="color:red">*</span>
+                    <label for="date" class="formbold-form-label"> Thời gian hoàn thành <span style="color:red"></span>
                     </label>
-                    <input type="text" name="completionTime" id="completionTime" required class="formbold-form-input" placeholder="VD: Trước 12h 1/12/2023" />
+                    <input type="text" name="completionTime" id="completionTime" class="formbold-form-input" placeholder="VD: Trước 12h 1/12/2023" />
                 </div>
             </div>
 
             <div class="formbold-input-flex">
                 <div>
-                    <label for="fee" class="formbold-form-label"> Phí đề xuất (VNĐ) <span style="color:red">*</span></label>
-                    <input type="number" name="fee" id="fee" required class="formbold-form-input" placeholder="VD: 50.000, 100.000,..." />
+                    <label for="fee" class="formbold-form-label"> Phí đề xuất (VNĐ) <span style="color:red"></span></label>
+                    <input type="number" name="fee" id="fee" class="formbold-form-input" placeholder="VD: 50.000, 100.000,..." />
                 </div>
                 <div>
                     <label for="contact" class="formbold-form-label"> Thông tin liên lạc <span style="color:red">*</span></label>
@@ -143,8 +137,8 @@ if (isset($_POST['submit'])) {
 
             <div class="formbold-input-flex">
                 <div>
-                    <label for="schedule" class="formbold-form-label"> Đặt lịch làm việc <span style="color:red">*</span></label>
-                    <input type="text" name="schedule" id="schedule" required class="formbold-form-input" placeholder="VD: 12h 1/12/2023,..." />
+                    <label for="schedule" class="formbold-form-label"> Đặt lịch làm việc <span style="color:red"></span></label>
+                    <input type="text" name="schedule" id="schedule" class="formbold-form-input" placeholder="VD: 12h 1/12/2023,..." />
                 </div>
                 <div>
                     <label for="requirements" class="formbold-form-label">Yêu cầu giảng dậy </label>
@@ -236,7 +230,28 @@ if (isset($_POST['submit'])) {
 
     body {
         font-family: 'Inter', sans-serif;
+        margin: 0;
+        padding: 0;
+        position: relative;
+    }
 
+    body::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        background-color: rgba(0, 0, 0, 0.6);
+        z-index: -1;
+    }
+
+    body {
+        background-image: url('bg-img.jpg');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        z-index: 0;
     }
 
     .formbold-main-wrapper {
@@ -283,7 +298,7 @@ if (isset($_POST['submit'])) {
 
     .footer {
         position: relative;
-        bottom: 103px
+        bottom: 78px
     }
 
     .formbold-event-wrapper h4 {
@@ -368,7 +383,7 @@ if (isset($_POST['submit'])) {
         width: 100%;
         padding: 13px 22px;
         border-radius: 5px;
-        border: 2px solid #a6a4a4;
+        border: 1px solid #a6a4a4;
         background: #ffffff;
         font-weight: 500;
         font-size: 16px;
@@ -383,7 +398,8 @@ if (isset($_POST['submit'])) {
     }
 
     .formbold-form-label {
-        color: #a6a4a4;
+        color: #000;
+        font-weight: bold;
         font-size: 14px;
         line-height: 24px;
         display: block;
@@ -494,7 +510,7 @@ if (isset($_POST['submit'])) {
 
         .footer {
             position: relative;
-            top: 43px;
+            top: 73px;
         }
 
         form p {
