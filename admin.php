@@ -98,7 +98,8 @@ if (isset($_GET['logout'])) {
                         <th> Thời gian y/c </th>
                         <th> </th>
                         <th> File</th>
-                        <th> Người xử lý </th>
+                        <th>Nhập người xử lý </th>
+                        <th> Tên người xử lý </th>
                         <th> Hành động </th>
                     </tr>
                 </thead>
@@ -119,6 +120,7 @@ if (isset($_GET['logout'])) {
 
                                 if ($result) {
                                     echo "<script>alert('Lưu thành công')</script>";
+                                    header("Location: admin.php");
                                 } else {
                                     echo "<script>alert('Lưu thất bại')</script>";
                                 }
@@ -148,18 +150,19 @@ if (isset($_GET['logout'])) {
                                 $filePaths = explode(', ', $request->filePath);
                                 foreach ($filePaths as $filePath) {
                                     $fileName = basename($filePath);
-                                    echo '<a href="download_file.php?file=' . urlencode($filePath) . '" download>' . substr($fileName, 0, 20) . '</a><br>';
+                                    echo '<a href="download_file.php?file=' . urlencode($filePath) . '" download>' . substr($fileName, 0, 13) . '</a><br>';
                                 }
                                 ?>
                             </td>
                             </td>
-
 
                             <form action="" method="POST">
                                 <input type="hidden" name="id" value="<?= $request->id ?>">
                                 <td>
                                     <input type="text" name="handleActor" placeholder="Nhập người xử lý">
                                 </td>
+                                <td><?= $request->handleActor; ?></td>
+
                                 <td style="display:flex; column-gap:10px">
                                     <a href="javascript:void(0);" onclick="confirmAndDelete(<?= $request->id ?>)" style="text-decoration: none;">
                                         <p class="status cancelled">Xóa</p>
@@ -300,7 +303,7 @@ if (isset($_GET['logout'])) {
 
 
     thead tr th {
-        font-size: 0.9rem;
+        font-size: 0.8rem;
         text-transform: none;
     }
 
