@@ -68,12 +68,12 @@ class RequestManager
 }
 
 if (isset($_POST['submit'])) {
-    $nameProject = $_POST['nameProject'];
-    $completionTime = $_POST['completionTime'];
-    $fee = $_POST['fee'];
-    $contact = $_POST['contact'];
-    $schedule = $_POST['schedule'];
-    $studyRequest = $_POST['studyRequest'];
+    $nameProject = htmlspecialchars($_POST['nameProject']);
+    $completionTime = htmlspecialchars($_POST['completionTime']);
+    $fee = htmlspecialchars($_POST['fee']);
+    $contact = htmlspecialchars($_POST['contact']);
+    $schedule = htmlspecialchars($_POST['schedule']);
+    $studyRequest = htmlspecialchars($_POST['studyRequest']);
 
     $requestManager = new RequestManager($connection);
 
