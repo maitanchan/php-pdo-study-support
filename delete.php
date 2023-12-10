@@ -16,14 +16,41 @@ class RequestManager
         $statement = $this->connection->prepare($sql);
         return $statement->execute([':id' => $id]);
     }
+
+    public function getUserPassword($username)
+    {
+        $sql = 'SELECT password FROM `users` WHERE username=:username';
+        $statement = $this->connection->prepare($sql);
+        $statement->execute([':username' => $username]);
+        $result = $statement->fetch(PDO::FETCH_ASSOC);
+        return $result['password'];
+    }
 }
 
-if (isset($_GET['id'])) {
+session_start();
+if (!isset($_SESSION['username'])) {
+    header("Location: login.php");
+    exit();
+}
+
+if (isset($_GET['id']) && isset($_GET['password'])) {
     $id = $_GET['id'];
+    $enteredPassword = $_GET['password'];
+    $username = $_SESSION['username'];
 
     $requestManager = new RequestManager($connection);
-    if ($requestManager->deleteRequest($id)) {
-        echo '<script>alert("Request deleted successfully.");</script>';
-        header("Location: admin.php");
+
+    $userPassword = $requestManager->getUserPassword($username);
+
+    if ($enteredPassword === $userPassword) {
+        if ($requestManager->deleteRequest($id)) {
+            echo '<script>alert("Xóa thành công");</script>';
+            header("Location: admin.php");
+        } else {
+            echo '<script>alert("Xóa thất bại");</script>';
+            header("Location: admin.php");
+        }
+    } else {
+        echo '<script>alert("Sai mật khẩu");</script>';
     }
 }
